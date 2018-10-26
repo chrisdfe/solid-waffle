@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+const generateSite = require('../static-site-generator/generate');
+
+generateSite();

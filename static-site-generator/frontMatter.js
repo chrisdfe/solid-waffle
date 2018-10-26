@@ -1,6 +1,8 @@
 const Promise = require("bluebird");
 const yaml = require("js-yaml");
 
+const fsUtils = require("./fsUtils");
+
 const isFrontMatterDelineator = line => line.match(/^-{3,}$/g);
 
 const frontMatterDelineatedLineIndex = lines => {
@@ -23,7 +25,9 @@ const extract = contents =>
 
     if (frontMatterDelineatorIndex > -1) {
       const yamlRaw = lines.slice(0, frontMatterDelineatorIndex).join("\n");
-      context = yaml.safeLoad(yamlRaw);
+      if (yamlRaw.length > 0) {
+        context = yaml.safeLoad(yamlRaw);
+      }
 
       content = lines
         .slice(frontMatterDelineatorIndex + 1, lines.length)
@@ -33,4 +37,9 @@ const extract = contents =>
     return { context, content };
   });
 
-module.exports = { extract };
+const extractFromFile = filename =>
+  Promise.try(() => fsUtils.loadFileContents(filename)).then(contents =>
+    extract(contents)
+  );
+
+module.exports = { extract, extractFromFile };

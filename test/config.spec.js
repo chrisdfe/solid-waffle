@@ -23,14 +23,14 @@ describe("readConfig", () => {
       destDir: "testDestionationDirectory"
     });
 
-    return readConfig().then(config => {
-      expect(config)
-        .to.be.an("object")
-        .that.includes.all.keys(["sourceDir", "destDir"]);
+    const config = readConfig();
 
-      expect(config.sourceDir).to.equal("testSourceDirectory");
-      expect(config.destDir).to.equal("testDestionationDirectory");
-    });
+    expect(config)
+      .to.be.an("object")
+      .that.includes.all.keys(["sourceDir", "destDir"]);
+
+    expect(config.sourceDir).to.equal("testSourceDirectory");
+    expect(config.destDir).to.equal("testDestionationDirectory");
   });
 
   it("adds default configuration", () => {
@@ -39,17 +39,18 @@ describe("readConfig", () => {
       destDir: "testDestionationDirectory"
     });
 
-    return readConfig().then(config => {
-      expect(config)
-        .to.be.an("object")
-        .that.includes.all.keys([
-          "sourceDir",
-          "destDir",
-          "layoutDir",
-          "globalContext"
-        ]);
-    });
+    const config = readConfig();
+
+    expect(config)
+      .to.be.an("object")
+      .that.includes.all.keys([
+        "sourceDir",
+        "destDir",
+        "layoutsDir",
+        "globalContext"
+      ]);
   });
 
+  xdescribe("caching");
   xdescribe("globalContext");
 });

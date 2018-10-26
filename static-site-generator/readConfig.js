@@ -1,21 +1,25 @@
 const _ = require("lodash");
-const fs = require("fs");
+const fs = require("fs-extra");
 const yaml = require("js-yaml");
 const Promise = require("bluebird");
 
-const configDefaults = {
+const defaults = {
   sourceDir: "src",
   destDir: "dist",
-  layoutDir: "src/layouts",
+  layoutsDir: "src/layouts",
   globalContext: {
     layout: false
   }
 };
 
-// TODO - make sure filepath is relative to root
-const readConfig = () =>
-  Promise.try(() =>
-    yaml.safeLoad(fs.readFileSync("generator-config.yml", "utf8"))
-  ).then(data => _.defaultsDeep(data, configDefaults));
+// TODO
+// 1) make sure filepath is relative to root
+// 2) cache config in a way that doesn't break tests
+const readConfig = () => {
+  const rawConfig = yaml.safeLoad(
+    fs.readFileSync("generator-config.yml", "utf8")
+  );
+  return _.defaultsDeep(rawConfig, defaults);
+};
 
 module.exports = readConfig;
