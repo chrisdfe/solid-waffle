@@ -4,23 +4,27 @@ const yaml = require("js-yaml");
 const fs = require("fs-extra");
 const path = require("path");
 
+const { createMockTemplateContents } = require("./utils");
 const generate = require("../static-site-generator/generate");
 
 const expect = chai.expect;
 
 describe("generate", () => {
   const createMockFileContents = (context = {}) =>
-    [
-      yaml.safeDump({ title: "Test Title", ...context }),
-      "---",
-      "<h1><%= title %></h1>"
-    ].join("\n");
+    createMockTemplateContents({
+      frontMatter: { title: "Test Title", ...context },
+      content: "<h1><%= title %></h1>"
+    });
 
   const createMockConfig = (config = {}) => ({
     sourceDir: "testSourceDirectory",
     destDir: "testDestionationDirectory",
     layoutsDir: "testSourceDirectory/testLayoutsDirectory",
     ...config
+  });
+
+  it("exists", () => {
+    expect(generate).to.be.a("function");
   });
 
   it("outputs to dist/", () => {
@@ -112,9 +116,6 @@ describe("generate", () => {
     return generate().then(() => {
       const distFiles = fs.readdirSync(mockConfig.destDir);
 
-      // TODO: Fix this test.
-      // This should check for 'testLayoutsDirectory', but instead checks for
-      // 'testSourceDirectory/testLayoutsDirectory' so it will always pass
       expect(distFiles).to.not.include("testLayoutsDirectory");
     });
   });
@@ -125,13 +126,13 @@ describe("generate", () => {
     mock({
       "generator-config.yml": yaml.safeDump(mockConfig),
       [mockConfig.sourceDir]: {
-        "index.html": [
-          yaml.safeDump({
+        "index.html": createMockTemplateContents({
+          frontMatter: {
             layout: "default.html"
-          }),
-          "---",
-          "<h2>I would like to be rendered inside of the default layout please</h2>"
-        ].join("\n")
+          },
+          content:
+            "<h2>I would like to be rendered inside of the default layout please</h2>"
+        })
       },
       [mockConfig.layoutsDir]: {
         "default.html": "<div><h2>Layout Title</h2><%- children %></div>"

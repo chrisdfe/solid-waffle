@@ -17,7 +17,7 @@ describe("readConfig", () => {
     expect(readConfig).to.exist.and.be.a("function");
   });
 
-  it("reads the content correctly", () => {
+  it("reads the configuration correctly", () => {
     createMockConfig({
       sourceDir: "testSourceDirectory",
       destDir: "testDestionationDirectory"
@@ -34,10 +34,7 @@ describe("readConfig", () => {
   });
 
   it("adds default configuration", () => {
-    createMockConfig({
-      sourceDir: "testSourceDirectory",
-      destDir: "testDestionationDirectory"
-    });
+    createMockConfig();
 
     const config = readConfig();
 

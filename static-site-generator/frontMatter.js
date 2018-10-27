@@ -1,3 +1,4 @@
+const _ = require("lodash");
 const Promise = require("bluebird");
 const yaml = require("js-yaml");
 
@@ -25,6 +26,7 @@ const extract = contents =>
 
     if (frontMatterDelineatorIndex > -1) {
       const yamlRaw = lines.slice(0, frontMatterDelineatorIndex).join("\n");
+
       if (yamlRaw.length > 0) {
         context = yaml.safeLoad(yamlRaw);
       }

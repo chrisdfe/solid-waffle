@@ -2,29 +2,29 @@ const chai = require("chai");
 const mock = require("mock-fs");
 const yaml = require("js-yaml");
 
+const { createMockTemplateContents } = require("./utils");
 const fileTree = require("../static-site-generator/fileTree");
 
 const expect = chai.expect;
 
 describe("fileTree", () => {
-  it("exists", () => {
-    expect(fileTree)
-      .to.exist.and.be.an("object")
-      .that.has.all.keys(["buildFromSourceDir"]);
-  });
-
   const createMockFileContents = (context = {}) =>
-    [
-      yaml.safeDump({ title: "Test Title", ...context }),
-      "---",
-      "<h1><%= title %></h1>"
-    ].join("\n");
+    createMockTemplateContents({
+      frontMatter: { title: "Test Title", ...context },
+      content: "<h1><%= title %></h1>"
+    });
 
   const createMockConfig = (config = {}) => ({
     sourceDir: "testSourceDirectory",
     destDir: "testDestionationDirectory",
     layoutsDir: "testSourceDirectory/testLayoutsDirectory",
     ...config
+  });
+
+  it("exists", () => {
+    expect(fileTree)
+      .to.exist.and.be.an("object")
+      .that.has.all.keys(["buildFromSourceDir"]);
   });
 
   it("generates a fileData tree", () => {
@@ -34,12 +34,16 @@ describe("fileTree", () => {
       "generator-config.yml": yaml.safeDump(mockConfig),
       [mockConfig.sourceDir]: {
         "index.html": "",
-        "404.html": ""
+        posts: {
+          post1: ""
+        }
       }
     });
 
     return fileTree.buildFromSourceDir().then(tree => {
       expect(tree).to.be.an("array");
+      expect(tree[0]).to.be.an("object");
+      expect(tree[1]).to.be.an("array");
     });
   });
 
@@ -49,8 +53,7 @@ describe("fileTree", () => {
     mock({
       "generator-config.yml": yaml.safeDump(mockConfig),
       [mockConfig.sourceDir]: {
-        "index.html": "",
-        "404.html": ""
+        "index.html": ""
       }
     });
 
@@ -70,23 +73,22 @@ describe("fileTree", () => {
       mock({
         "generator-config.yml": yaml.safeDump(mockConfig),
         [mockConfig.sourceDir]: {
-          "index.html": [
-            yaml.safeDump({
+          "index.html": createMockTemplateContents({
+            frontMatter: {
               layout: "default.html",
               indexContextField: 2
-            }),
-            "---",
-            "<h2>I want to be rendered inside of the default layout</h2>"
-          ].join("\n")
+            },
+            content:
+              "<h2>I want to be rendered inside of the default layout</h2>"
+          })
         },
         [mockConfig.layoutsDir]: {
-          "default.html": [
-            yaml.safeDump({
+          "default.html": createMockTemplateContents({
+            frontMatter: {
               layoutContextField: 1
-            }),
-            "---",
-            "<body><h2>Layout Title</h2><%- content %></body>"
-          ].join("\n")
+            },
+            content: "<body><h2>Layout Title</h2><%- content %></body>"
+          })
         }
       });
     };

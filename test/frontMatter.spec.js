@@ -2,6 +2,7 @@ const chai = require("chai");
 const mock = require("mock-fs");
 const yaml = require("js-yaml");
 
+const { createMockTemplateContents } = require("./utils");
 const frontMatter = require("../static-site-generator/frontMatter");
 
 const expect = chai.expect;
@@ -15,14 +16,13 @@ describe("frontMatter", () => {
 
   describe("extract", () => {
     it("has the expected return shape", () => {
-      const input = [
-        yaml.safeDump({
+      const input = createMockTemplateContents({
+        frontMatter: {
           firstKey: 1,
           secondKey: 2
-        }),
-        "----",
-        "<h2>html goes here.</h2>"
-      ].join("\n");
+        },
+        content: "<h2>html goes here.</h2>"
+      });
 
       return frontMatter.extract(input).then(result => {
         expect(result)
@@ -32,17 +32,16 @@ describe("frontMatter", () => {
     });
 
     it("parses the context correctly", () => {
-      const input = [
-        yaml.safeDump({
+      const input = createMockTemplateContents({
+        frontMatter: {
           numberKey: 1,
           stringKey: "hello",
           objectKey: {
             nestedKey: 4
           }
-        }),
-        "------",
-        "<h2>Here is some html</h2>"
-      ].join("\n");
+        },
+        content: "<h2>Here is some html</h2>"
+      });
 
       return frontMatter.extract(input).then(({ context }) => {
         expect(context)
@@ -58,12 +57,10 @@ describe("frontMatter", () => {
     });
 
     it("handles blank front matter gracefully", () => {
-      // prettier-ignore
-      const input = [
-        "",
-        "------",
-        "<h2>Here is some html</h2>"
-      ].join("\n");
+      const input = createMockTemplateContents({
+        frontMatter: "",
+        content: "<h2>Here is some html</h2>"
+      });
 
       return frontMatter.extract(input).then(({ context }) => {
         expect(context).to.be.an("object").that.is.empty;
@@ -71,24 +68,25 @@ describe("frontMatter", () => {
     });
 
     it("parses the content correctly", () => {
-      const inputPieces = [
-        yaml.safeDump({
+      const content = "<h2>Here is some html</h2>";
+      const input = createMockTemplateContents({
+        frontMatter: {
           numberKey: 1,
           stringKey: "hello",
           objectKey: {
             nestedKey: 4
           }
-        }),
-        "------",
-        "<h2>Here is some html</h2>"
-      ];
-      const input = inputPieces.join("\n");
-
-      return frontMatter.extract(input).then(({ content }) => {
-        expect(content)
-          .to.be.a("string")
-          .that.equals(inputPieces[2]);
+        },
+        content
       });
+
+      return frontMatter
+        .extract(input)
+        .then(({ content: extractedContent }) => {
+          expect(extractedContent)
+            .to.be.a("string")
+            .that.equals(content);
+        });
     });
   });
 
