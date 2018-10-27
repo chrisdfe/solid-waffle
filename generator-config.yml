@@ -1,5 +1,0 @@
-sourceDir: src
-destDir: dist
-globalContext:
-  layout: false
-  siteTitle: "Christopher Ferris"
