@@ -3,13 +3,16 @@ const fs = require("fs-extra");
 const path = require("path");
 const _ = require("lodash");
 
-const compileTemplate = require("./compileTemplate");
 const frontMatter = require("./frontMatter");
 const fsUtils = require("./fsUtils");
 const readConfig = require("./readConfig");
 const templateHelpers = require("./templateHelpers");
 
-const getDirectoryBlacklist = () => [readConfig().layoutsDir];
+const getDirectoryNameFromFullPath = path =>
+  path
+    .split("/")
+    .slice(-1)
+    .join("/");
 
 // Builds a filedata object for a file. Doesn't check for layout etc
 const buildFile = filename => {
@@ -75,8 +78,10 @@ const buildFilesInDirectory = directory =>
       const stats = fs.lstatSync(filename);
 
       if (stats.isDirectory()) {
-        // TODO - get this working again
-        if (getDirectoryBlacklist().includes(filename)) {
+        if (
+          getDirectoryNameFromFullPath(filename).startsWith("_") ||
+          filename === readConfig().layoutsDir
+        ) {
           return [];
         }
 

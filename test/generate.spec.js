@@ -10,12 +10,6 @@ const generate = require("../static-site-generator/generate");
 const expect = chai.expect;
 
 describe("generate", () => {
-  const createMockFileContents = (context = {}) =>
-    createMockTemplateContents({
-      frontMatter: { title: "Test Title", ...context },
-      content: "<h1><%= title %></h1>"
-    });
-
   const createMockConfig = (config = {}) => ({
     sourceDir: "testSourceDirectory",
     destDir: "testDestionationDirectory",
@@ -46,16 +40,18 @@ describe("generate", () => {
     });
   });
 
-  it("outputs the correct file contents", () => {
+  it("renders ejs correctly", () => {
     const mockConfig = createMockConfig();
 
-    const indexFileContext = { title: "Index Title" };
-    const indexFileContents = createMockFileContents(indexFileContext);
+    const indexFileTemplate = createMockTemplateContents({
+      frontMatter: { title: "Index Title" },
+      content: "<h1><%= title %></h1>"
+    });
 
     mock({
       "generator-config.yml": yaml.safeDump(mockConfig),
       [mockConfig.sourceDir]: {
-        "index.html": indexFileContents
+        "index.html": indexFileTemplate
       }
     });
 
@@ -68,7 +64,40 @@ describe("generate", () => {
 
       expect(outputContents)
         .to.be.a("string")
-        .that.includes(indexFileContext.title);
+        .that.includes("Index Title");
+    });
+  });
+
+  it('renders markdown for files with a "md" filename extension', () => {
+    const mockConfig = createMockConfig();
+
+    const indexFileTemplate = createMockTemplateContents({
+      frontMatter: { title: "Index Title" },
+      // prettier-ignore
+      content: [
+        "# <%= title %>",
+        "This is a markdown file.",
+      ].join("\n")
+    });
+
+    mock({
+      "generator-config.yml": yaml.safeDump(mockConfig),
+      [mockConfig.sourceDir]: {
+        "index.md": indexFileTemplate
+      }
+    });
+
+    return generate().then(() => {
+      const distFiles = fs.readdirSync(mockConfig.destDir);
+
+      const outputContents = fs
+        .readFileSync(path.join(mockConfig.destDir, distFiles[0]))
+        .toString();
+
+      expect(outputContents)
+        .to.be.a("string")
+        .that.includes(`Index Title`)
+        .and.includes("<p>This is a markdown file.</p>");
     });
   });
 
@@ -100,7 +129,30 @@ describe("generate", () => {
     });
   });
 
-  it("ignores the layouts/ directory", () => {
+  it("doesn't build directories prefixed with a '_'", () => {
+    const mockConfig = createMockConfig();
+
+    mock({
+      "generator-config.yml": yaml.safeDump(mockConfig),
+      [mockConfig.sourceDir]: {
+        "index.html": "",
+        _ignoreThisDirectory: {
+          ignoredFile: ""
+        }
+      },
+      [mockConfig.layoutsDir]: {
+        "default.html": ""
+      }
+    });
+
+    return generate().then(() => {
+      const distFiles = fs.readdirSync(mockConfig.destDir);
+
+      expect(distFiles).and.to.not.include("_ignoreThisDirectory");
+    });
+  });
+
+  it("doesn't build files in the layout directory", () => {
     const mockConfig = createMockConfig();
 
     mock({
@@ -116,7 +168,7 @@ describe("generate", () => {
     return generate().then(() => {
       const distFiles = fs.readdirSync(mockConfig.destDir);
 
-      expect(distFiles).to.not.include("testLayoutsDirectory");
+      expect(distFiles).and.to.not.include("testLayoutsDirectory");
     });
   });
 

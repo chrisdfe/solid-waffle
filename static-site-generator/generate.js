@@ -2,12 +2,13 @@ const fs = require("fs-extra");
 const path = require("path");
 const Promise = require("bluebird");
 const yaml = require("js-yaml");
+const ejs = require("ejs");
+const marked = require("marked");
 
 const fileTree = require("./fileTree");
 const fsUtils = require("./fsUtils");
 
 const readConfig = require("./readConfig");
-const compileTemplate = require("./compileTemplate");
 
 const removeDestFolder = () =>
   Promise.try(() => fs.removeSync(readConfig().destDir));
@@ -18,6 +19,20 @@ const getParentDirectory = filename =>
     .slice(0, -1)
     .join("/");
 
+const getFilenameExtension = filename => {
+  const pieces = filename.split(".");
+  return pieces[pieces.length - 1];
+};
+
+const renderTemplate = (filename, template, context) =>
+  Promise.try(() => ejs.render(template, context)).then(output => {
+    if (getFilenameExtension(filename) === "md") {
+      return marked(output);
+    }
+
+    return output;
+  });
+
 const writeFiledataToFilesystem = (fileData, inheritedContext) => {
   let { filename, context, content } = fileData;
 
@@ -27,7 +42,7 @@ const writeFiledataToFilesystem = (fileData, inheritedContext) => {
     if (context.children.length > 0) {
       return Promise.try(() => context.children)
         .map(child => {
-          return compileTemplate(child.content, child.context);
+          return renderTemplate(filename, child.content, child.context);
         })
         .then(renderedChildren => renderedChildren.join("\n"))
         .then(renderedChildren => {
@@ -37,7 +52,7 @@ const writeFiledataToFilesystem = (fileData, inheritedContext) => {
 
     return null;
   }).then(() => {
-    return compileTemplate(content, context).then(compiled => {
+    return renderTemplate(filename, content, context).then(compiled => {
       const destPath = fsUtils.sourcePathToDestPath(filename);
       const parentDirectory = getParentDirectory(destPath);
 
