@@ -172,7 +172,7 @@ describe("generate", () => {
     });
   });
 
-  it("renders template children correctly", () => {
+  it("renders template body correctly", () => {
     const mockConfig = createMockConfig();
 
     mock({
@@ -187,7 +187,7 @@ describe("generate", () => {
         })
       },
       [mockConfig.layoutsDir]: {
-        "default.html": "<div><h2>Layout Title</h2><%- children %></div>"
+        "default.html": "<div><h2>Layout Title</h2><%- body %></div>"
       }
     });
 

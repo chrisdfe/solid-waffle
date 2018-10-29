@@ -45,10 +45,9 @@ const inheritLayout = (layoutFilename, currentFileData) => {
       _.cloneDeep(currentFileData.context)
     );
 
-    // Push children into layout context
-    inheritedFileData.context.children.push(currentFileData);
+    inheritedFileData.context.body = currentFileData;
 
-    // Retain current filename
+    // Retain current filename (otherwise it will use the layout template's filename)
     inheritedFileData.filename = currentFileData.filename;
 
     return inheritedFileData;

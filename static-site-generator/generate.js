@@ -37,17 +37,13 @@ const writeFiledataToFilesystem = (fileData, inheritedContext) => {
   let { filename, context, content } = fileData;
 
   return Promise.try(() => {
-    // render context children first
-    // TODO - beware circular 'children' references
-    if (context.children.length > 0) {
-      return Promise.try(() => context.children)
-        .map(child => {
-          return renderTemplate(filename, child.content, child.context);
-        })
-        .then(renderedChildren => renderedChildren.join("\n"))
-        .then(renderedChildren => {
-          context.children = renderedChildren;
-        });
+    // render context body first
+    if (context.body) {
+      return Promise.try(() =>
+        renderTemplate(filename, context.body.content, context.body.context)
+      ).then(renderedBody => {
+        context.body = renderedBody;
+      });
     }
 
     return null;

@@ -93,7 +93,7 @@ describe("fileTree", () => {
       });
     };
 
-    it("nests the children field correctly", () => {
+    it("nests the body field correctly", () => {
       mockLayoutFilesystem();
 
       return fileTree.buildFromSourceDir().then(tree => {
@@ -101,11 +101,11 @@ describe("fileTree", () => {
           .to.be.a("string")
           .that.includes("Layout Title");
 
-        expect(tree[0].context.children)
-          .to.be.an("array")
-          .with.lengthOf(1);
+        expect(tree[0].context.body)
+          .to.be.an("object")
+          .that.has.all.keys(["filename", "content", "context"]);
 
-        expect(tree[0].context.children[0].content)
+        expect(tree[0].context.body.content)
           .to.be.a("string")
           .that.includes("I want to be rendered inside of the default layout");
       });
@@ -122,7 +122,7 @@ describe("fileTree", () => {
       });
     });
 
-    it("passes the layout context down to the children", () => {
+    it("passes context down to inheritees", () => {
       mockLayoutFilesystem();
 
       return fileTree.buildFromSourceDir().then(tree => {
@@ -134,12 +134,12 @@ describe("fileTree", () => {
       });
     });
 
-    it("does not pass the 'children' context field from the layout template to the child", () => {
+    it("does not pass the 'body' context field from the layout template to the child", () => {
       mockLayoutFilesystem();
 
       return fileTree.buildFromSourceDir().then(tree => {
         const indexFile = tree[0];
-        expect(indexFile.context.children[0].context.children).be.empty;
+        expect(indexFile.context.body.context.body).be.undefined;
       });
     });
   });
