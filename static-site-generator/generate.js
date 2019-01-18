@@ -67,7 +67,6 @@ const writeFileTreeToFilesystem = fileTree =>
     }
   });
 
-// TODO - copy/compile asset directory into dist/
 const generateSite = () =>
   Promise.try(() => removeDestFolder())
     .then(() => fileTree.buildFromSourceDir())

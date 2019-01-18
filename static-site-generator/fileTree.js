@@ -14,17 +14,14 @@ const getDirectoryNameFromFullPath = path =>
     .slice(-1)
     .join("/");
 
-// Builds a filedata object for a file. Doesn't check for layout etc
-const buildFile = filename => {
+// Builds a fileData object for a file. Doesn't check for layout etc
+const buildFileData = filename => {
   return Promise.try(() => frontMatter.extractFromFile(filename)).then(
     ({ content, context: localContext }) => {
-      const children = [];
-
       const context = {
         ...readConfig().globalContext,
         ...localContext,
-        ...templateHelpers,
-        children
+        ...templateHelpers
       };
 
       return { filename, content, context };
@@ -32,11 +29,11 @@ const buildFile = filename => {
   );
 };
 
-// Makes the currentFileData a 'child' of the layout it inherits from.
+// Makes the currentFileData the body of the layout it inherits from.
 const inheritLayout = (layoutFilename, currentFileData) => {
   const layoutPath = path.join(readConfig().layoutsDir, layoutFilename);
 
-  return buildFile(layoutPath).then(layoutFileData => {
+  return buildFileData(layoutPath).then(layoutFileData => {
     const inheritedFileData = _.cloneDeep(layoutFileData);
 
     // Inherit context from layout
@@ -45,6 +42,7 @@ const inheritLayout = (layoutFilename, currentFileData) => {
       _.cloneDeep(currentFileData.context)
     );
 
+    // Set the body field
     inheritedFileData.context.body = currentFileData;
 
     // Retain current filename (otherwise it will use the layout template's filename)
@@ -55,8 +53,8 @@ const inheritLayout = (layoutFilename, currentFileData) => {
 };
 
 // TODO - better name for this.
-const buildFileFull = filename => {
-  return Promise.try(() => buildFile(filename)).then(fileData => {
+const buildFileDataFull = filename => {
+  return Promise.try(() => buildFileData(filename)).then(fileData => {
     const { layout } = fileData.context;
 
     if (layout) {
@@ -70,7 +68,7 @@ const buildFileFull = filename => {
 // TODO
 // a) inherit context
 // b) have a directory blacklist to prevent expanding layouts, partials etc
-const buildFilesInDirectory = directory =>
+const buildFileTreeFromDirectory = directory =>
   Promise.try(() => fs.readdirSync(directory))
     .map(filename => path.join(directory, filename))
     .map(filename => {
@@ -84,15 +82,18 @@ const buildFilesInDirectory = directory =>
           return [];
         }
 
-        return buildFilesInDirectory(filename);
+        return buildFileTreeFromDirectory(filename);
       }
 
-      return buildFileFull(filename);
+      return buildFileDataFull(filename);
     });
 
 const buildFromSourceDir = () =>
   Promise.try(() =>
-    buildFilesInDirectory(readConfig().sourceDir, readConfig().globalContext)
+    buildFileTreeFromDirectory(
+      readConfig().sourceDir,
+      readConfig().globalContext
+    )
   );
 
 module.exports = {
