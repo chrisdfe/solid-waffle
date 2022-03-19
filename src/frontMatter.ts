@@ -1,5 +1,6 @@
 // const _ = require("lodash");
 import { load as loadYaml } from "js-yaml";
+import { TemplateContext } from "./types";
 
 const fsUtils = require("./fsUtils");
 
@@ -14,7 +15,7 @@ const getFrontMatterDelineatedLineIndex = (lines: string[]) => {
   return -1;
 };
 
-export const extract = async (contents: string) => {
+export const extract = async (contents: string): Promise<{ context: TemplateContext, content: string }> => {
   const lines = contents.split("\n");
 
   const frontMatterDelineatorIndex = getFrontMatterDelineatedLineIndex(lines);

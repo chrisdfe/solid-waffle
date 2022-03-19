@@ -1,11 +1,13 @@
-import { promises as fs} from 'fs'
+import { promises as fs } from 'fs'
 import * as path from "path";
 
 import cloneDeep from 'lodash-es/cloneDeep';
 
 import * as frontMatter from "./frontMatter";
 import readConfig from "./readConfig";
-import templateHelpers from "./templateHelpers";
+// import templateHelpers from "./templateHelpers";
+
+import type { FileData, FileDataTree } from './types';
 
 const getDirectoryNameFromFullPath = (path: string) =>
   path
@@ -14,21 +16,20 @@ const getDirectoryNameFromFullPath = (path: string) =>
     .join("/");
 
 // Builds a fileData object for a file. Doesn't check for layout etc
-const buildFileData = async (filename: string) => {
+const buildFileData = async (filename: string): Promise<FileData> => {
   const { content, context: localContext } = await frontMatter.extractFromFile(filename)
 
   const context = {
     ...(await readConfig()).globalContext,
     ...localContext,
-    ...templateHelpers
+    // ...templateHelpers
   };
 
   return { filename, content, context };
 };
 
 // Makes the currentFileData the body of the layout it inherits from.
-// @ts-ignore
-const inheritLayout = async (layoutFilename: string, currentFileData) => {
+const inheritLayout = async (layoutFilename: string, currentFileData: FileData): Promise<FileData> => {
   const config = await readConfig();
   const layoutPath = path.join(config.layoutsDir, layoutFilename);
 
@@ -65,9 +66,8 @@ const buildFileDataFull = async (filename: string) => {
 // TODO
 // a) inherit context
 // b) have a directory blacklist to prevent expanding layouts, partials etc
-// @ts-ignore
 // const buildFileTreeFromDirectory = async (directory: string, inheritedContext) => {
-const buildFileTreeFromDirectory = async (directory: string) => {
+const buildFileTreeFromDirectory = async (directory: string): Promise<FileDataTree> => {
   const config = await readConfig();
   const directories = await fs.readdir(directory)
   const fullDirectories = directories.map(filename => path.join(directory, filename))
