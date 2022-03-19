@@ -1,4 +1,4 @@
-const _ = require("lodash");
+const defaultsDeep = require("lodash/defaultsDeep");
 const fs = require("fs-extra");
 const yaml = require("js-yaml");
 
@@ -19,7 +19,8 @@ const readConfig = () => {
   const rawConfig = yaml.safeLoad(
     fs.readFileSync("generator-config.yml", "utf8")
   );
-  return _.defaultsDeep(rawConfig, defaults);
+
+  return defaultsDeep(rawConfig, defaults);
 };
 
 module.exports = readConfig;
