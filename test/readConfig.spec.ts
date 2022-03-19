@@ -1,14 +1,13 @@
-const chai = require("chai");
-const mock = require("mock-fs");
-const yaml = require("js-yaml");
+import { expect } from "chai";
+import * as yaml from "js-yaml";
 
-const readConfig = require("../src/readConfig");
+import readConfig from "../src/readConfig";
 
-const expect = chai.expect;
+import { mockFs } from './utils';
 
 const createMockConfig = (config = {}) => {
-  mock({
-    "generator-config.yml": yaml.safeDump(config)
+  mockFs({
+    "generator-config.yml": yaml.dump(config)
   });
 };
 
@@ -17,13 +16,13 @@ describe("readConfig", () => {
     expect(readConfig).to.exist.and.be.a("function");
   });
 
-  it("reads the configuration correctly", () => {
+  it("reads the configuration correctly", async () => {
     createMockConfig({
       sourceDir: "testSourceDirectory",
       destDir: "testDestionationDirectory"
     });
 
-    const config = readConfig();
+    const config = await readConfig();
 
     expect(config)
       .to.be.an("object")
@@ -33,10 +32,10 @@ describe("readConfig", () => {
     expect(config.destDir).to.equal("testDestionationDirectory");
   });
 
-  it("adds default configuration", () => {
+  it("adds default configuration", async () => {
     createMockConfig();
 
-    const config = readConfig();
+    const config = await readConfig();
 
     expect(config)
       .to.be.an("object")
@@ -48,6 +47,6 @@ describe("readConfig", () => {
       ]);
   });
 
-  xdescribe("caching");
-  xdescribe("globalContext");
+  xdescribe("caching", () => { });
+  xdescribe("globalContext", () => { });
 });

@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs'
 import * as path from "path";
 
-import cloneDeep from 'lodash-es/cloneDeep';
+import { cloneDeep } from 'lodash-es';
 
 import * as frontMatter from "./frontMatter";
 import readConfig from "./readConfig";
@@ -92,7 +92,7 @@ const buildFileTreeFromDirectory = async (directory: string): Promise<FileDataTr
   )
 }
 
-const buildFromSourceDir = async () => {
+export const buildFromSourceDir = async () => {
   const config = await readConfig();
 
   return buildFileTreeFromDirectory(
@@ -100,7 +100,3 @@ const buildFromSourceDir = async () => {
     // config.globalContext
   )
 }
-
-module.exports = {
-  buildFromSourceDir
-};
