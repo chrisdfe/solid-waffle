@@ -1,7 +1,4 @@
 const fs = require("fs-extra");
-const path = require("path");
-const Promise = require("bluebird");
-const yaml = require("js-yaml");
 const ejs = require("ejs");
 const marked = require("marked");
 
@@ -10,8 +7,9 @@ const fsUtils = require("./fsUtils");
 
 const readConfig = require("./readConfig");
 
-const removeDestFolder = () =>
-  Promise.try(() => fs.removeSync(readConfig().destDir));
+const removeDestFolder = async () => {
+  fs.removeSync(readConfig().destDir)
+}
 
 const getParentDirectory = filename =>
   filename
@@ -24,52 +22,46 @@ const getFilenameExtension = filename => {
   return pieces[pieces.length - 1];
 };
 
-const renderTemplate = (filename, template, context) =>
-  Promise.try(() => ejs.render(template, context)).then(output => {
-    if (getFilenameExtension(filename) === "md") {
-      return marked(output);
-    }
+const renderTemplate = async (filename, template, context) => {
+  const output = await ejs.render(template, context)
 
-    return output;
-  });
+  if (getFilenameExtension(filename) === "md") {
+    return marked(output);
+  }
 
-const writeFiledataToFilesystem = (fileData, inheritedContext) => {
+  return output;
+}
+
+const writeFiledataToFilesystem = async (fileData, inheritedContext) => {
   let { filename, context, content } = fileData;
 
-  return Promise.try(() => {
-    // render context body first
-    if (context.body) {
-      return Promise.try(() =>
-        renderTemplate(filename, context.body.content, context.body.context)
-      ).then(renderedBody => {
-        context.body = renderedBody;
-      });
-    }
+  // render context body first
+  if (context.body) {
+    const renderedBody = await renderTemplate(filename, context.body.content, context.body.context)
+    context.body = renderedBody;
+  }
 
-    return null;
-  }).then(() => {
-    return renderTemplate(filename, content, context).then(compiled => {
-      const destPath = fsUtils.sourcePathToDestPath(filename);
-      const parentDirectory = getParentDirectory(destPath);
+  const compiled = await renderTemplate(filename, content, context)
+  const destPath = fsUtils.sourcePathToDestPath(filename);
+  const parentDirectory = getParentDirectory(destPath);
 
-      fs.mkdirpSync(parentDirectory);
-      fs.writeFileSync(destPath, compiled);
-    });
-  });
+  fs.mkdirpSync(parentDirectory);
+  fs.writeFileSync(destPath, compiled);
 };
 
-const writeFileTreeToFilesystem = fileTree =>
-  Promise.try(() => fileTree).map(fileData => {
+const writeFileTreeToFilesystem = async fileTree =>
+  Promise.all(fileTree.map(fileData => {
     if (Array.isArray(fileData)) {
       return writeFileTreeToFilesystem(fileData);
     } else {
       return writeFiledataToFilesystem(fileData);
     }
-  });
+  }))
 
-const generateSite = () =>
-  Promise.try(() => removeDestFolder())
-    .then(() => fileTree.buildFromSourceDir())
-    .then(fileTree => writeFileTreeToFilesystem(fileTree));
+const generateSite = async () => {
+  await removeDestFolder()
+  const newFileTree = await fileTree.buildFromSourceDir()
+  await writeFileTreeToFilesystem(newFileTree);
+}
 
 module.exports = generateSite;

@@ -1,7 +1,6 @@
 const _ = require("lodash");
 const fs = require("fs-extra");
 const yaml = require("js-yaml");
-const Promise = require("bluebird");
 
 const defaults = {
   sourceDir: "src",

@@ -1,4 +1,5 @@
-const renderPartial = (template, context) => {};
+// TODO
+const renderPartial = (template, context) => { };
 
 module.exports = {
   renderPartial,

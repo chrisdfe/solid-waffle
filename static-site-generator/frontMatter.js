@@ -1,12 +1,11 @@
 const _ = require("lodash");
-const Promise = require("bluebird");
 const yaml = require("js-yaml");
 
 const fsUtils = require("./fsUtils");
 
 const isFrontMatterDelineator = line => line.match(/^-{3,}$/g);
 
-const frontMatterDelineatedLineIndex = lines => {
+const getFrontMatterDelineatedLineIndex = lines => {
   for (let i = 0; i < lines.length; i++) {
     if (isFrontMatterDelineator(lines[i])) {
       return i;
@@ -15,33 +14,32 @@ const frontMatterDelineatedLineIndex = lines => {
   return -1;
 };
 
-const extract = contents =>
-  Promise.try(() => {
-    const lines = contents.split("\n");
+const extract = async contents => {
+  const lines = contents.split("\n");
 
-    const frontMatterDelineatorIndex = frontMatterDelineatedLineIndex(lines);
+  const frontMatterDelineatorIndex = getFrontMatterDelineatedLineIndex(lines);
 
-    let context = {};
-    let content = contents;
+  let context = {};
+  let content = contents;
 
-    if (frontMatterDelineatorIndex > -1) {
-      const yamlRaw = lines.slice(0, frontMatterDelineatorIndex).join("\n");
+  if (frontMatterDelineatorIndex > -1) {
+    const yamlRaw = lines.slice(0, frontMatterDelineatorIndex).join("\n");
 
-      if (yamlRaw.length > 0) {
-        context = yaml.safeLoad(yamlRaw);
-      }
-
-      content = lines
-        .slice(frontMatterDelineatorIndex + 1, lines.length)
-        .join("\n");
+    if (yamlRaw.length > 0) {
+      context = yaml.safeLoad(yamlRaw);
     }
 
-    return { context, content };
-  });
+    content = lines
+      .slice(frontMatterDelineatorIndex + 1, lines.length)
+      .join("\n");
+  }
 
-const extractFromFile = filename =>
-  Promise.try(() => fsUtils.loadFileContents(filename)).then(contents =>
-    extract(contents)
-  );
+  return { context, content };
+}
+
+const extractFromFile = async filename => {
+  const contents = await fsUtils.loadFileContents(filename)
+  return extract(contents)
+}
 
 module.exports = { extract, extractFromFile };
