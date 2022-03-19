@@ -1,6 +1,6 @@
-const defaultsDeep = require("lodash/defaultsDeep");
-const fs = require("fs-extra");
-const yaml = require("js-yaml");
+import {defaultsDeep} from "lodash-es";
+import { promises as fs } from 'fs';
+import { load as loadYaml } from "js-yaml";
 
 const defaults = {
   sourceDir: "src",
@@ -15,12 +15,12 @@ const defaults = {
 // 1) make sure filepath is relative to root
 // 2) cache config in a way that doesn't break tests
 // 3) configurable config file name
-const readConfig = () => {
-  const rawConfig = yaml.safeLoad(
-    fs.readFileSync("generator-config.yml", "utf8")
+const readConfig = async () => {
+  const rawConfig = loadYaml(
+    await fs.readFile("generator-config.yml", "utf8")
   );
 
   return defaultsDeep(rawConfig, defaults);
 };
 
-module.exports = readConfig;
+export default readConfig;

@@ -2,7 +2,7 @@ const chai = require("chai");
 const mock = require("mock-fs");
 const yaml = require("js-yaml");
 
-const readConfig = require("../static-site-generator/readConfig");
+const readConfig = require("../src/readConfig");
 
 const expect = chai.expect;
 

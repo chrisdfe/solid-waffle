@@ -5,7 +5,7 @@ const fs = require("fs-extra");
 const path = require("path");
 
 const { createMockTemplateContents } = require("./utils");
-const generate = require("../static-site-generator/generate");
+const generate = require("../src/generate");
 
 const expect = chai.expect;
 

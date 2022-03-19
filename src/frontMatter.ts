@@ -1,11 +1,11 @@
-const _ = require("lodash");
-const yaml = require("js-yaml");
+// const _ = require("lodash");
+import { load as loadYaml } from "js-yaml";
 
 const fsUtils = require("./fsUtils");
 
-const isFrontMatterDelineator = line => line.match(/^-{3,}$/g);
+const isFrontMatterDelineator = (line: string) => line.match(/^-{3,}$/g);
 
-const getFrontMatterDelineatedLineIndex = lines => {
+const getFrontMatterDelineatedLineIndex = (lines: string[]) => {
   for (let i = 0; i < lines.length; i++) {
     if (isFrontMatterDelineator(lines[i])) {
       return i;
@@ -14,7 +14,7 @@ const getFrontMatterDelineatedLineIndex = lines => {
   return -1;
 };
 
-const extract = async contents => {
+export const extract = async (contents: string) => {
   const lines = contents.split("\n");
 
   const frontMatterDelineatorIndex = getFrontMatterDelineatedLineIndex(lines);
@@ -26,7 +26,7 @@ const extract = async contents => {
     const yamlRaw = lines.slice(0, frontMatterDelineatorIndex).join("\n");
 
     if (yamlRaw.length > 0) {
-      context = yaml.safeLoad(yamlRaw);
+      context = (loadYaml(yamlRaw) as any);
     }
 
     content = lines
@@ -37,7 +37,7 @@ const extract = async contents => {
   return { context, content };
 }
 
-const extractFromFile = async filename => {
+export const extractFromFile = async (filename: string) => {
   const contents = await fsUtils.loadFileContents(filename)
   return extract(contents)
 }

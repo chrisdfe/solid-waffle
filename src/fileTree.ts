@@ -1,23 +1,24 @@
-const fs = require("fs-extra");
-const path = require("path");
-const _ = require("lodash");
+import { promises as fs} from 'fs'
+import * as path from "path";
 
-const frontMatter = require("./frontMatter");
-const readConfig = require("./readConfig");
-const templateHelpers = require("./templateHelpers");
+import cloneDeep from 'lodash-es/cloneDeep';
 
-const getDirectoryNameFromFullPath = path =>
+import * as frontMatter from "./frontMatter";
+import readConfig from "./readConfig";
+import templateHelpers from "./templateHelpers";
+
+const getDirectoryNameFromFullPath = (path: string) =>
   path
     .split("/")
     .slice(-1)
     .join("/");
 
 // Builds a fileData object for a file. Doesn't check for layout etc
-const buildFileData = async filename => {
+const buildFileData = async (filename: string) => {
   const { content, context: localContext } = await frontMatter.extractFromFile(filename)
 
   const context = {
-    ...readConfig().globalContext,
+    ...(await readConfig()).globalContext,
     ...localContext,
     ...templateHelpers
   };
@@ -26,16 +27,18 @@ const buildFileData = async filename => {
 };
 
 // Makes the currentFileData the body of the layout it inherits from.
-const inheritLayout = async (layoutFilename, currentFileData) => {
-  const layoutPath = path.join(readConfig().layoutsDir, layoutFilename);
+// @ts-ignore
+const inheritLayout = async (layoutFilename: string, currentFileData) => {
+  const config = await readConfig();
+  const layoutPath = path.join(config.layoutsDir, layoutFilename);
 
   const layoutFileData = await buildFileData(layoutPath)
-  const inheritedFileData = _.cloneDeep(layoutFileData);
+  const inheritedFileData = cloneDeep(layoutFileData);
 
   // Inherit context from layout
   Object.assign(
     inheritedFileData.context,
-    _.cloneDeep(currentFileData.context)
+    cloneDeep(currentFileData.context)
   );
 
   // Set the body field
@@ -48,7 +51,7 @@ const inheritLayout = async (layoutFilename, currentFileData) => {
 };
 
 // TODO - better name for this.
-const buildFileDataFull = async filename => {
+const buildFileDataFull = async (filename: string) => {
   const fileData = await buildFileData(filename);
   const { layout } = fileData.context;
 
@@ -62,18 +65,21 @@ const buildFileDataFull = async filename => {
 // TODO
 // a) inherit context
 // b) have a directory blacklist to prevent expanding layouts, partials etc
-const buildFileTreeFromDirectory = async directory => {
-  const directories = fs.readdirSync(directory)
+// @ts-ignore
+// const buildFileTreeFromDirectory = async (directory: string, inheritedContext) => {
+const buildFileTreeFromDirectory = async (directory: string) => {
+  const config = await readConfig();
+  const directories = await fs.readdir(directory)
   const fullDirectories = directories.map(filename => path.join(directory, filename))
 
   return Promise.all(
-    fullDirectories.map(filename => {
-      const stats = fs.lstatSync(filename);
+    fullDirectories.map(async filename => {
+      const stats = await fs.lstat(filename);
 
       if (stats.isDirectory()) {
         if (
           getDirectoryNameFromFullPath(filename).startsWith("_") ||
-          filename === readConfig().layoutsDir
+          filename === config.layoutsDir
         ) {
           return [];
         }
@@ -86,10 +92,12 @@ const buildFileTreeFromDirectory = async directory => {
   )
 }
 
-const buildFromSourceDir = () => {
+const buildFromSourceDir = async () => {
+  const config = await readConfig();
+
   return buildFileTreeFromDirectory(
-    readConfig().sourceDir,
-    readConfig().globalContext
+    config.sourceDir,
+    // config.globalContext
   )
 }
 

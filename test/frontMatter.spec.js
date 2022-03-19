@@ -3,7 +3,7 @@ const mock = require("mock-fs");
 const yaml = require("js-yaml");
 
 const { createMockTemplateContents } = require("./utils");
-const frontMatter = require("../static-site-generator/frontMatter");
+const frontMatter = require("../src/frontMatter");
 
 const expect = chai.expect;
 
